@@ -12,7 +12,10 @@ function loadBox(url) {
                 return "team-" + d.teamId;
             });
 
-
+        var lineHeight=40;
+        var playerTextColor="#eef";
+        var playerTextSize="18px";
+        var playerTextFont="Verdana, Helvetica, Arial, sans-serif";
         teams.forEach(function (t) {
 
 //                firstName: "Talbott",
@@ -32,13 +35,11 @@ function loadBox(url) {
 //                points: "7"
             var teamDiv = d3.select("div#team-" + t.teamId);
             teamDiv.append("h3").text(teamMetaData[t.teamId].shortName + " " + teamMetaData[t.teamId].nickName);
-            var tSvg = teamDiv.append("svg").attr("height", 20 + 40 * t.playerStats.length).attr("width", "800");
+            var tSvg = teamDiv.append("svg").attr("height", 20 + lineHeight * t.playerStats.length).attr("width", "800");
             var players = tSvg.selectAll("g").data(t.playerStats.map(function (ps) {
                 return shimPlayer(ps);
-            })).enter().append("g").attr("transform",function(d, i){return "translate( 10, "+(10+i*40)+")";});
-            var playerTextColor="#eef";
-            var playerTextSize="19px";
-            var playerTextFont="Verdana, Helvetica, Arial, sans-serif";
+            })).enter().append("g").attr("transform",function(d, i){return "translate( 10, "+(10+i*lineHeight)+")";});
+
             players.append("text")
                 .attr("x", "0")
                 .attr("y", "0")
@@ -60,34 +61,47 @@ function loadBox(url) {
                 .attr("font-family", playerTextFont)
                 .attr("font-size", playerTextSize)
                 .attr("fill", playerTextColor);
-
-
-            players.append("circle")
-                .attr("cx", function (d, i) {
-                    return 225;
-                })
-                .attr("cy", function (d, i) {
-                    return 7.5;
-                }).attr("r","15")
-                .attr("fill","#aaf");
-
-            players.append("text")
-                .attr("x", "225")
-                .attr("y", "0")
-                .attr("text-anchor", "middle")
-                .attr("dy", "0.71em")
-                .text(function (d) {
-                    return d.minutes;
-                })
-                .attr("font-family", playerTextFont)
-                .attr("font-size", playerTextSize)
-                .attr("fill", playerTextColor);
-
+            playerMinutes(players, 225, (lineHeight-6.0)/2.0, playerTextFont, playerTextSize, playerTextColor);
         });
 
 
     });
 }
+
+function playerMinutes(players, x, radius, playerTextFont, playerTextSize, playerTextColor) {
+    var color = d3.scale.linear()
+        .domain([0,1, 40])
+        .range(["#000", "#333", "#3f3"]);
+
+
+//    players.append("circle")
+//        .attr("cx", x)
+//        .attr("cy", radius/2.1)
+//        .attr("r", radius)
+//        .attr("fill", function(d,i){ return color(d.minutes);});
+
+    var arc = d3.svg.arc(x,radius/2.1)
+        .innerRadius(0)
+        .outerRadius(function(d,i) {return radius; })
+        .startAngle(function(d,i) { return 0; })
+        .endAngle(function(d) { return 2*3.1415927* d.minutes/40.0;});
+    players.append("g").attr("transform","translate("+x+", "+radius/2.1+")").append("path")
+        .attr("d", arc)
+        .attr("fill", "#f33");
+
+    players.append("text")
+        .attr("x", x)
+        .attr("y", "0")
+        .attr("text-anchor", "middle")
+        .attr("dy", "0.71em")
+        .text(function (d) {
+            return d.minutes;
+        })
+        .attr("font-family", playerTextFont)
+        .attr("font-size", playerTextSize)
+        .attr("fill", playerTextColor);
+}
+
 
 function shimPlayer(ps) {
     var name = ps.firstName + " " + ps.lastName;
