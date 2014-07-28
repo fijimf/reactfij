@@ -1,3 +1,16 @@
+function createHeader(svgNode, headings) {
+    var header = svgNode.append("g");
+    headings.forEach(function (h) {
+        header.append("text").text(h.text)
+            .attr("x", 10+h.pos)
+            .attr("y", "0")
+            .attr("dy", "0.71em")
+            .attr("class", "lineScore")
+            .style("font-variant", "small-caps")
+            .style("font-size", "80%");
+    });
+}
+
 function loadBox(url) {
     d3.json("testbed", function (err, data) {
         var teamMetaData = {};
@@ -13,9 +26,7 @@ function loadBox(url) {
             });
 
         var lineHeight=40;
-        var playerTextColor="#eef";
-        var playerTextSize="18px";
-        var playerTextFont="Verdana, Helvetica, Arial, sans-serif";
+
         teams.forEach(function (t) {
 
 //                firstName: "Talbott",
@@ -36,6 +47,14 @@ function loadBox(url) {
             var teamDiv = d3.select("div#team-" + t.teamId);
             teamDiv.append("h3").text(teamMetaData[t.teamId].shortName + " " + teamMetaData[t.teamId].nickName);
             var tSvg = teamDiv.append("svg").attr("height", 20 + lineHeight * t.playerStats.length).attr("width", "800");
+            var headings = [
+                {text: "Player", pos: 0},
+                {text: "Pos", pos: 180},
+                {text: "Min", pos: 210},
+                {text: "Pts", pos: 240}
+
+            ];
+            createHeader(tSvg, headings);
             var players = tSvg.selectAll("g").data(t.playerStats.map(function (ps) {
                 return shimPlayer(ps);
             })).enter().append("g").attr("transform",function(d, i){return "translate( 10, "+(10+i*lineHeight)+")";});
@@ -47,9 +66,7 @@ function loadBox(url) {
                 .text(function (d) {
                     return d.name;
                 })
-                .attr("font-family", playerTextFont)
-                .attr("font-size", playerTextSize)
-                .attr("fill", playerTextColor);
+                .attr("class", "lineScore");
 
             players.append("text")
                 .attr("x", "180")
@@ -58,28 +75,16 @@ function loadBox(url) {
                 .text(function (d) {
                     return d.pos;
                 })
-                .attr("font-family", playerTextFont)
-                .attr("font-size", playerTextSize)
-                .attr("fill", playerTextColor);
-            playerMinutes(players, 225, (lineHeight-6.0)/2.0, playerTextFont, playerTextSize, playerTextColor);
+                .attr("class", "lineScore");
+            playerMinutes(players, 225, (lineHeight-6.0)/2.0);
+            playerPoints(players, 255, (lineHeight-6.0)/2.0);
         });
 
 
     });
 }
 
-function playerMinutes(players, x, radius, playerTextFont, playerTextSize, playerTextColor) {
-    var color = d3.scale.linear()
-        .domain([0,1, 40])
-        .range(["#000", "#333", "#3f3"]);
-
-
-//    players.append("circle")
-//        .attr("cx", x)
-//        .attr("cy", radius/2.1)
-//        .attr("r", radius)
-//        .attr("fill", function(d,i){ return color(d.minutes);});
-
+function playerMinutes(players, x, radius) {
     var arc = d3.svg.arc(x,radius/2.1)
         .innerRadius(0)
         .outerRadius(function(d,i) {return radius; })
@@ -88,7 +93,6 @@ function playerMinutes(players, x, radius, playerTextFont, playerTextSize, playe
     players.append("g").attr("transform","translate("+x+", "+radius/2.1+")").append("path")
         .attr("d", arc)
         .attr("fill", "#f33");
-
     players.append("text")
         .attr("x", x)
         .attr("y", "0")
@@ -97,10 +101,8 @@ function playerMinutes(players, x, radius, playerTextFont, playerTextSize, playe
         .text(function (d) {
             return d.minutes;
         })
-        .attr("font-family", playerTextFont)
-        .attr("font-size", playerTextSize)
-        .attr("fill", playerTextColor);
-}
+        .attr("class", "lineScore")
+    ;}
 
 
 function shimPlayer(ps) {
