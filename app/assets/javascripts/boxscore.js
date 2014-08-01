@@ -1,8 +1,8 @@
-function createHeader(svgNode, headings) {
-    var header = svgNode.append("g");
+function createHeader(parent, headings) {
+    var header = parent.append("g");
     headings.forEach(function (h) {
         header.append("text").text(h.text)
-            .attr("x", 10+h.pos)
+            .attr("x", 10 + h.pos)
             .attr("y", "0")
             .attr("dy", "0.71em")
             .attr("class", "lineScore")
@@ -25,7 +25,7 @@ function loadBox(url) {
                 return "team-" + d.teamId;
             });
 
-        var lineHeight=40;
+        var lineHeight = 40;
 
         teams.forEach(function (t) {
 
@@ -51,13 +51,16 @@ function loadBox(url) {
                 {text: "Player", pos: 0},
                 {text: "Pos", pos: 180},
                 {text: "Min", pos: 210},
-                {text: "Pts", pos: 240}
+                {text: "Field Goals", pos: 240},
+                {text: "Free Throws", pos: 240}
 
             ];
             createHeader(tSvg, headings);
             var players = tSvg.selectAll("g").data(t.playerStats.map(function (ps) {
                 return shimPlayer(ps);
-            })).enter().append("g").attr("transform",function(d, i){return "translate( 10, "+(10+i*lineHeight)+")";});
+            })).enter().append("g").attr("transform", function (d, i) {
+                return "translate( 10, " + (10 + i * lineHeight) + ")";
+            });
 
             players.append("text")
                 .attr("x", "0")
@@ -76,8 +79,35 @@ function loadBox(url) {
                     return d.pos;
                 })
                 .attr("class", "lineScore");
-            playerMinutes(players, 225, (lineHeight-6.0)/2.0);
-            playerPoints(players, 255, (lineHeight-6.0)/2.0);
+            playerMinutes(players, 225, (lineHeight - 6.0) / 2.0);
+
+            var ggg = players.append("g").attr("transform","translate(260,0)");//.append("text").text(function(d,i){return d.fga;}).style("fill","white");
+            ggg.selectAll("circle").data(function (d) {
+                var arr = [];
+                for (index = 0; index < d.fga; ++index) {
+                    if (index < d.fgm) {
+                        if (index < d.fg3m){
+                            arr[index] = {color:"green", opacity:1.0};
+                        } else {
+                            arr[index] = {color:"blue", opacity:1.0};
+                        }
+                    } else {
+                        if (index< d.fgm+ d.fg3a ){
+                            arr[index] = {color:"green", opacity:0.0};
+                        } else {
+                            arr[index] = {color:"blue", opacity:0.0};
+                        }
+                    }
+                }
+                return arr;
+            }).enter().append("circle").attr("cx", function (d, i) {
+                return 15 * (i % 8);
+            }).attr("cy", function (d, i) {
+                return 15 * Math.floor(i / 8);
+            }).attr("r", 7).style("stroke", function(d,i){return d.color;}).style("fill", function(d,i){return d.color;}).style("fill-opacity", function (d, i) {
+                return d.opacity;
+            });
+//            makeCircles(players, 7.5, "white", 8).attr("transform", "translate(265,0)");
         });
 
 
@@ -85,12 +115,18 @@ function loadBox(url) {
 }
 
 function playerMinutes(players, x, radius) {
-    var arc = d3.svg.arc(x,radius/2.1)
+    var arc = d3.svg.arc(x, radius / 2.1)
         .innerRadius(0)
-        .outerRadius(function(d,i) {return radius; })
-        .startAngle(function(d,i) { return 0; })
-        .endAngle(function(d) { return 2*3.1415927* d.minutes/40.0;});
-    players.append("g").attr("transform","translate("+x+", "+radius/2.1+")").append("path")
+        .outerRadius(function (d, i) {
+            return radius;
+        })
+        .startAngle(function (d, i) {
+            return 0;
+        })
+        .endAngle(function (d) {
+            return 2 * 3.1415927 * d.minutes / 40.0;
+        });
+    players.append("g").attr("transform", "translate(" + x + ", " + radius / 2.1 + ")").append("path")
         .attr("d", arc)
         .attr("fill", "#f33");
     players.append("text")
@@ -102,7 +138,8 @@ function playerMinutes(players, x, radius) {
             return d.minutes;
         })
         .attr("class", "lineScore")
-    ;}
+    ;
+}
 
 
 function shimPlayer(ps) {
@@ -119,4 +156,33 @@ function shimPlayer(ps) {
     var fta = ft[1];
     var ftm = ft[0];
     return {"name": name, "pos": pos, "minutes": minutes, "fga": fga, "fgm": fgm, "fg3a": fg3a, "fg3m": fg3m, "fta": fta, "ftm": fta};
+}
+
+function makeCircles(parent, radius, color, maxWidth) {
+    var box = parent.selectAll("g.fgbox").data(function(d){return d;}).enter().append("g").attr("class", "fgbox");
+
+    box.selectAll("circle").data(function (d, i) {
+        var circleData = new Array(d.fga);
+        for (var n = 0; n < d.fga; n++) {
+            circleData[n] = {"x": (n % maxWidth) * (2 * radius + 1), "y": (Math.floor(n / maxWidth) * 2 * radius), "filled": n < d.fgm};
+        }
+        return circleData;
+    }).enter().append("circle")
+        .attr("cx", function (d, i) {
+            return d.x;
+        })
+        .attr("cy", function (d, i) {
+            return d.y;
+        })
+        .attr("r", radius)
+        .attr("fill", color)
+        .attr("stroke", color)
+        .attr("fill-opacity", function (d, i) {
+            if (d.fill) {
+                return 1.0;
+            } else {
+                return 0.0;
+            }
+        });
+    return box;
 }
