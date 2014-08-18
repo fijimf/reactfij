@@ -24,4 +24,6 @@ object Scraper extends Controller {
      Ok(views.html.index2("testbed"))
   }
 
+  def scrapeTeam = {}
+
 }

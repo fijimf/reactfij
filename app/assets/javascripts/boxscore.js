@@ -87,23 +87,23 @@ function loadBox(url) {
                 for (index = 0; index < d.fga; ++index) {
                     if (index < d.fgm) {
                         if (index < d.fg3m){
-                            arr[index] = {color:"green", opacity:1.0};
+                            arr[index] = {x:15* index, y:0,color:"green", opacity:1.0};
                         } else {
-                            arr[index] = {color:"blue", opacity:1.0};
+                            arr[index] = {x:15 * index, y:0, color:"blue", opacity:1.0};
                         }
                     } else {
-                        if (index< d.fgm+ d.fg3a ){
-                            arr[index] = {color:"green", opacity:0.0};
+                        if ((index- d.fgm)< + d.fg3a ){
+                            arr[index] = {x:15 *(index- d.fgm), y:15, color:"green", opacity:0.0};
                         } else {
-                            arr[index] = {color:"blue", opacity:0.0};
+                            arr[index] = {x:15 * (index- d.fgm), y:15, color:"blue", opacity:0.0};
                         }
                     }
                 }
                 return arr;
             }).enter().append("circle").attr("cx", function (d, i) {
-                return 15 * (i % 8);
+                return d.x;
             }).attr("cy", function (d, i) {
-                return 15 * Math.floor(i / 8);
+                return d.y;
             }).attr("r", 7).style("stroke", function(d,i){return d.color;}).style("fill", function(d,i){return d.color;}).style("fill-opacity", function (d, i) {
                 return d.opacity;
             });
