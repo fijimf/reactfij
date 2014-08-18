@@ -13,44 +13,58 @@ object GameInfoScraper {
   import play.api.Play.current
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  case class GameInfo(
+  case class GameInfo (
     id:Int,
-		conference:String,
-		gameState:String,
-		startDate:LocalDate,
-	//		"startDateDisplay":"Feb. 12",
-		startTime:LocalTime,
-	//		"startTimeEpoch":"1392220800",
-	//	  "currentPeriod":"Final",
-		finalMessage:String,
-		gameStatus:String,
-//		  "periodStatus":"In-Progress",
-//		  "downToGo":"",
-//		  "timeclock":"",		     
-//		  "network_logo":"",
-		location:String,
-		contestName:String,
-		url:String,
-//TODO		  champInfo: {  },
-//		  "videos":[],
-	  scoreBreakdown:Seq[String]
-		home: GameTeam,
-		away: GameTeam,
-//			     "tabs": "/sites/default/files/data//game/basketball-men/d1/2014/02/12/winthrop-longwood/tabs.json",
-	  tabsArray:Seq[GameLink],
-//TODO	    		 "status": {},
-//TODO    			 "alerts": {}
-	) 
-  case class GameTeam()
-  case class TeamSocial()
-  case class GameLinks()
+    conference:String,
+    gameState:String,
+    startDate:LocalDate,
+    startTime:LocalTime,
+    finalMessage:String,
+    gameStatus:String,
+    location:String,
+    contestName:String,
+    url:String,
+    scoreBreakdown:Seq[String]
+    home: GameTeam,
+    away: GameTeam,
+    tabsArray:Seq[GameLink]
+  ) 
+	//TODO "status": {},
+        //TODO "alerts": {}
+        //TODO "champInfo": {},
 
-  implicit def scoreboardReads:Reads[Scoreboard] = (
+  case class GameTeam(
+    teamRank:Int,
+    iconURL:String,
+    name:String,
+    nameRaw:String,
+    nameSeo:String,
+    shortname:String,
+    color:String,
+    social:TeamSocial,
+    description:String,
+    currentScore:Int,
+    scoreBreakdown:Seq[Int],
+    winner:Boolean
+  )
+  
+  case class TeamSocial(twitter:Option[SocialInstance], facebook:Option[SocialInstance])
+		      
+  case class SocialInstance(keywords:Seq[String], accounts:SocialAccountList  	)
+  
+  case class SocialAccountList(ncaa:Option[String], athleticDept:Option[String], conference:Option[String])
+  
+  case class GameLinks(type:String, title:String, file:String)
+
+  implicit def gameInfoReads:Reads[GameInfo] = (
     (JsPath \ "day").read[LocalDate](jodaLocalDateReads("EEEE, MMMM dd, yyyy")) and
     (JsPath \ "games").read[Seq[String]]
   )(Scoreboard.apply _)
- 
-  implicit def scoreboardsReads: Reads[Scoreboards] = (JsPath \ "scoreboard").read[Seq[Scoreboard]].map(Scoreboards)
+ implicit def gameTeamReads:Reads[GameTeam] = (
+  implicit def teamSocialReads: Reads[TeamSocial] = (JsPath \ "scoreboard").read[Seq[Scoreboard]].map(Scoreboards)
+  implicit def socialInstanceReads: Reads[SocialInstance] = (JsPath \ "scoreboard").read[Seq[Scoreboard]].map(Scoreboards)
+  implicit def socialAccountListReads: Reads[SocialAccountList] = (JsPath \ "scoreboard").read[Seq[Scoreboard]].map(Scoreboards)
+  implicit def gameLinksReads: Reads[Gamelinks] = (JsPath \ "scoreboard").read[Seq[Scoreboard]].map(Scoreboards)
 
   def main(args: Array[String]) {
     test()
