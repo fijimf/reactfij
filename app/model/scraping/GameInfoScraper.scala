@@ -50,21 +50,66 @@ object GameInfoScraper {
   
   case class TeamSocial(twitter:Option[SocialInstance], facebook:Option[SocialInstance])
 		      
-  case class SocialInstance(keywords:Seq[String], accounts:SocialAccountList  	)
+  case class SocialInstance(keywords:Seq[String], accounts:SocialAccountList)
   
   case class SocialAccountList(ncaa:Option[String], athleticDept:Option[String], conference:Option[String])
   
   case class GameLinks(type:String, title:String, file:String)
 
   implicit def gameInfoReads:Reads[GameInfo] = (
-    (JsPath \ "day").read[LocalDate](jodaLocalDateReads("EEEE, MMMM dd, yyyy")) and
-    (JsPath \ "games").read[Seq[String]]
-  )(Scoreboard.apply _)
+  	(JsPath \ "id").read[Int] and
+  	(JsPath \ "conference").read[String] and
+        (JsPath \ "gameState").read[String] and
+        (JsPath \ "startDate").read[LocalDate] and
+        (JsPath \ "startTime").read[LocalTime] and
+        (JsPath \ "finalMessage").read[String] and
+        (JsPath \ "gameStatus").read[String] and
+        (JsPath \ "location").read[String] and
+        (JsPath \ "contestName").read[String] and
+        (JsPath \ "url").read[String] and
+        (JsPath \ "scoreBreakdown").read[Seq[String]] and
+        (JsPath \ "home").read[GameTeam] and
+        (JsPath \ "away").read[GameTeam] and
+        (JsPath \ "tabsArray").read[Seq[GameLinks]] and
+  )(GameInfo.apply _)
+  
  implicit def gameTeamReads:Reads[GameTeam] = (
-  implicit def teamSocialReads: Reads[TeamSocial] = (JsPath \ "scoreboard").read[Seq[Scoreboard]].map(Scoreboards)
-  implicit def socialInstanceReads: Reads[SocialInstance] = (JsPath \ "scoreboard").read[Seq[Scoreboard]].map(Scoreboards)
-  implicit def socialAccountListReads: Reads[SocialAccountList] = (JsPath \ "scoreboard").read[Seq[Scoreboard]].map(Scoreboards)
-  implicit def gameLinksReads: Reads[Gamelinks] = (JsPath \ "scoreboard").read[Seq[Scoreboard]].map(Scoreboards)
+  	(JsPath \ "teamRank").read[Int] and
+        (JsPath \ "iconURL").read[String] and
+	(JsPath \ "name").read[String] and
+        (JsPath \ "nameRaw").read[String] and
+        (JsPath \ "nameSeo").read[String] and
+        (JsPath \ "shortname").read[String] and
+	(JsPath \ "color").read[String] and
+	(JsPath \ "social").read[TeamSocial] and
+        (JsPath \ "description").read[String] and
+        (JsPath \ "currentScore").read[Int] and
+        (JsPath \ "scoreBreakdown").read[Seq[Int] and
+        (JsPath \ "winner").read[Boolean] 
+  )(GameTeam.apply _)
+ 
+  implicit def teamSocialReads:Reads[TeamSocial] = (
+  	(JsPath \ "twitter").readNullable[SocialInstance] and
+        (JsPath \ "facebook").readNullable[SocialInstance]
+  )(TeamSocial.apply _)
+ 		
+  implicit def socialInstanceReads: Reads[SocialInstance] = (
+  	(JsPath \ "keywords").read[Seq[String]] and
+        (JsPath \ "accounts").read[SocialAccountList] 
+  )(SocialInstance.apply _)
+  
+  implicit def socialAccountListReads: Reads[SocialAccountList] = (
+  	(JsPath \ "ncaa".readNullable[String] and
+        (JsPath \ "athleticDept".readNullable[String] and
+        (JsPath \ "conference".readNullable[String] and
+        (JsPath \ "sport".readNullable[String] //TODO
+  )(SocialInstance.apply _)
+  
+  implicit def gameLinksReads: Reads[Gamelinks] = (
+  	(JsPath \ "type").read[String] and
+  	(JsPath \ "title").read[String] and
+  	(JsPath \ "file").read[String]
+  )(GameLink.apply _)
 
   def main(args: Array[String]) {
     test()
