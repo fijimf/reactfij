@@ -63,7 +63,7 @@ object DailyScoreboardScraper {
         s.games.foreach(g=>{
           print(gameUrl(g))
           WS.url(gameUrl(g)).get().map(unwrapJson).map(s => {
-            print(s);
+            print(s)
           })
         })
     })
