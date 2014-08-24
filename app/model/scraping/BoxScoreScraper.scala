@@ -13,7 +13,7 @@ import play.api.libs.ws.{WSResponse, WS}
 
 import scala.concurrent.Future
 
-case object GameInfoScraper {
+case object BoxScoreScraper {
   import play.api.Play.current
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
