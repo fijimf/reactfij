@@ -1,14 +1,14 @@
 package model.scraping.actors
 
 import akka.actor.Actor
-import model.scraping.GameInfoScraper
+import model.scraping.{BoxScoreScraper, GameInfoScraper}
 import play.api.Logger
 
-class GameInfoActor extends Actor {
+class BoxScoreActor extends Actor {
   override def receive: Receive = {
     case url: String =>
       Logger.info("Loading "+url)
-      GameInfoScraper.loadGameUrl(url)
+      BoxScoreScraper.loadBoxScore(url)
     case _ => Logger.info("Unexpected message")
   }
 }
