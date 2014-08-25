@@ -1,8 +1,8 @@
 package model.scraping.actors
 
-import akka.actor.{Props, Actor}
-import model.scraping.GameInfoScraper
-import model.scraping.GameInfoScraper.GameInfo
+import akka.actor.{Actor, Props}
+import model.scraping.model.GameInfo
+import model.scraping.scrapers.GameInfoScraper
 import play.api.Logger
 
 
@@ -18,6 +18,7 @@ class GameInfoActor extends Actor {
       Logger.info("Loading " + url)
       GameInfoScraper.loadGameUrl(url, (info: GameInfo) => {
         info.tabsArray.seq.foreach(_.foreach(gi => {
+
           if (gi.linkType == "boxscore") {
             bsActor ! gameUrl(gi.file)
           }

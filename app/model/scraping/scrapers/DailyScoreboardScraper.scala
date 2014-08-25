@@ -1,7 +1,8 @@
-package model.scraping
+package model.scraping.scrapers
 
 import java.io.PrintStream
 
+import model.scraping.model.{Scoreboards, Scoreboard}
 import org.joda.time.LocalDate
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import play.api.data.validation.ValidationError
@@ -17,9 +18,6 @@ case object DailyScoreboardScraper {
   import play.api.Play.current
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-  case class Scoreboard(day: LocalDate, games: Seq[String])
-
-  case class Scoreboards(scoreboard: Seq[Scoreboard])
 
   implicit def scoreboardReads: Reads[Scoreboard] = (
                                                       (JsPath \ "day").read[LocalDate](jodaLocalDateReads("EEEE, MMMM dd, yyyy")) and

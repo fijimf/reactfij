@@ -1,7 +1,7 @@
 package model.scraping.actors
 
 import akka.actor.Actor
-import model.scraping.{BoxScoreScraper, GameInfoScraper}
+import model.scraping.scrapers.BoxScoreScraper
 import play.api.Logger
 
 class BoxScoreActor extends Actor {

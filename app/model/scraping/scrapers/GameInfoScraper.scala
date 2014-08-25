@@ -1,7 +1,8 @@
-package model.scraping
+package model.scraping.scrapers
 
 import java.io.PrintStream
 
+import model.scraping.model._
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.joda.time.{LocalDate, LocalTime}
 import play.api.Logger
@@ -9,15 +10,17 @@ import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
-import play.api.libs.ws.{WSResponse, WS}
+import play.api.libs.ws.{WS, WSResponse}
 
 import scala.concurrent.Future
 
 case object GameInfoScraper {
+
   import play.api.Play.current
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   def jodaLocalTimeReads(pattern: String, corrector: String => String = identity): Reads[org.joda.time.LocalTime] = new Reads[org.joda.time.LocalTime] {
+
     import org.joda.time.format.DateTimeFormat
 
     val df = DateTimeFormat.forPattern(pattern)
@@ -34,55 +37,13 @@ case object GameInfoScraper {
       scala.util.control.Exception.allCatch[LocalTime] opt LocalTime.parse(input, df)
   }
 
-  case class GameInfo(
-                       id: String,
-                       conference: String,
-                       gameState: String,
-                       startDate: LocalDate,
-                       startTime: LocalTime,
-                       finalMessage: String,
-                       gameStatus: String,
-                       location: String,
-                       contestName: String,
-                       url: String,
-                       scoreBreakdown: Seq[String],
-                       home: GameTeam,
-                       away: GameTeam,
-                       tabsArray: Seq[Seq[GameLinks]]
-                       )
 
-  //TODO "status": {},
-  //TODO "alerts": {}
-  //TODO "champInfo": {},
-
-  case class GameTeam(
-                       teamRank: String,
-                       iconURL: String,
-                       name: String,
-                       nameRaw: String,
-                       nameSeo: String,
-                       shortname: String,
-                       color: String,
-                       social: TeamSocial,
-                       description: String,
-                       currentScore: String,
-                       scoreBreakdown: Seq[String],
-                       winner: String
-                       )
-
-  case class TeamSocial(twitter: Option[SocialInstance], facebook: Option[SocialInstance])
-
-  case class SocialInstance(keywords: Seq[String], accounts: SocialAccountList)
-
-  case class SocialAccountList(ncaa: Option[String], athleticDept: Option[String], conference: Option[String], sport: Option[String])
-
-  case class GameLinks(linkType: String, title: String, file: String)
   implicit def gameInfoReads: Reads[GameInfo] = (
                                                   (JsPath \ "id").read[String] and
                                                     (JsPath \ "conference").read[String] and
                                                     (JsPath \ "gameState").read[String] and
                                                     (JsPath \ "startDate").read[LocalDate] and
-                                                    (JsPath \ "startTime").read[LocalTime](jodaLocalTimeReads("h:mm", (s:String)=>s.split(" ")(0))) and
+                                                    (JsPath \ "startTime").read[LocalTime](jodaLocalTimeReads("h:mm", (s: String) => s.split(" ")(0))) and
                                                     (JsPath \ "finalMessage").read[String] and
                                                     (JsPath \ "gameStatus").read[String] and
                                                     (JsPath \ "location").read[String] and
@@ -132,8 +93,7 @@ case object GameInfoScraper {
                                                     )(GameLinks.apply _)
 
 
-  def loadGameUrl[T](url:String, f: GameInfo => T = dumpGameInfo): Future[Either[Seq[(JsPath, Seq[ValidationError])], T]] = {
-    Logger.info(">>>>>>"+url+"<<<<<<")
+  def loadGameUrl[T](url: String, f: GameInfo => T = dumpGameInfo): Future[Either[Seq[(JsPath, Seq[ValidationError])], T]] = {
     WS.url(url).get().map(unwrapJson).map(s => {
       Json.fromJson[GameInfo](Json.parse(s)) match {
         case JsSuccess(scoreboards, _) => Right(f(scoreboards))
@@ -142,11 +102,11 @@ case object GameInfoScraper {
     })
   }
 
-  val dumpGameInfo:GameInfo=>Unit = showGameInfo(_,System.out)
+  val dumpGameInfo: GameInfo => Unit = showGameInfo(_, System.out)
 
 
-  def showGameInfo(s: GameInfo, out:PrintStream): Unit = {
-    out.println(s.id+" "+s.away.name+" @ "+s.home.name+" "+s.startDate)
+  def showGameInfo(s: GameInfo, out: PrintStream): Unit = {
+    out.println(s.id + " " + s.away.name + " @ " + s.home.name + " " + s.startDate)
   }
 
   def unwrapJson(ws: WSResponse): String = {

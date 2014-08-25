@@ -1,7 +1,7 @@
 package model.scraping
 
-import akka.actor.{Props, ActorRef, ActorSystem}
-import model.scraping.actors.{DailyScoreboardActor, GameInfoActor}
+import actors.{DailyScoreboardActor, GameInfoActor}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import org.joda.time.LocalDate
 
 object ActorTest {

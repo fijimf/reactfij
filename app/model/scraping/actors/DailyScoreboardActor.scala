@@ -1,8 +1,8 @@
 package model.scraping.actors
 
 import akka.actor._
-import model.scraping.DailyScoreboardScraper
-import model.scraping.DailyScoreboardScraper.Scoreboards
+import model.scraping.model.Scoreboards
+import model.scraping.scrapers.DailyScoreboardScraper
 import org.joda.time.LocalDate
 import play.api.Logger
 
