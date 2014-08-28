@@ -1,87 +1,110 @@
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+package model.scraping.scrapers
 
-import java.io.*;
+import org.jsoup._
+import org.jsoup.nodes._
+import org.jsoup.select._
+import play.api.libs.ws.WS
 
-public class Junk {
-
-    public static void main(String[] args) {
-        try {
+import scala.concurrent.Future
 
 
+case object TeamPageScraper {
 
-            File f = new File("src/main/resources/junk2.html");
-            final Document d = Jsoup.parse(f, "UTF-8", "http://www.ncaa.com/schools/georgetown/basketball-men");
 
-            extractMeta(d);
-            extractTables(d);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+  import play.api.Play.current
+  import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+import scala.collection.JavaConverters._
+
+  def loadPage[T](key: String): Future[String] = {
+    WS.url(f"http://www.ncaa.com/schools/$key%s/basketball-men").get().map(s => {
+      val d: Document = Jsoup.parse(s.body)
+      println(extractMeta(d).toMap)
+      println(extractTables(d))
+      "Hey Yo!"
+    })
+  }
+
+  def extractMeta(d: Document): Iterator[(String, String)] = {
+    d.select("li.school-info").iterator().asScala.map(element => {
+      val labels: Elements = element.select("span.school-meta-label")
+      if (!labels.isEmpty) {
+        val key = labels.get(0).ownText().trim()
+        val value = element.ownText()
+        Some(key -> value)
+      } else {
+        None
+      }
+    }).flatten
+  }
+
+  def extractTables(d: Document): Unit = {
+    val tables: Elements = d.select("table.ncaa-schools-sport-table")
+    tables.iterator().asScala.foreach(table => {
+      val theads: Elements = table.select("thead")
+      if (isPlayerHeader(theads)) {
+        handlePlayerTable(table)
+      } else if (isScheduleHeader(theads)) {
+        handleGameTable(table)
+      } else {
+        System.err.println("Unknown table")
+      }
+    })
+  }
+
+  def isPlayerHeader(theads: Elements): Boolean = {
+    if (!theads.isEmpty) {
+      val cols: Elements = theads.get(0).select("tr th")
+      (cols.size() > 2) && cols.get(1).ownText().equalsIgnoreCase("name") && cols.get(2).ownText().equalsIgnoreCase("position")
+    } else {
+      false
     }
+  }
 
-    private static void extractMeta(Document d) {
-        final Elements elements = d.select("li.school-info");
-        for (Element element : elements) {
-            final Elements labels = element.select("span.school-meta-label");
-            if (!labels.isEmpty()){
-                final String key = labels.get(0).ownText().trim();
-                final String value = element.ownText();
-                System.err.println(key+"->"+value);
-            }
-        }
+  def isScheduleHeader(theads: Elements): Boolean = {
+    if (!theads.isEmpty) {
+      val cols: Elements = theads.get(0).select("tr th")
+      (cols.size() > 2) && cols.get(0).ownText().equalsIgnoreCase("date") && cols.get(1).ownText().equalsIgnoreCase("opponent")
+    } else {
+      false
     }
-    private static void extractTables(Document d) {
-        final Elements tables = d.select("table.ncaa-schools-sport-table");
-        for (Element table : tables) {
-            final Elements ths = table.select("thead");
-            if (!ths.isEmpty()) {
-                final Elements cols = ths.get(0).select("tr th");
-                if ((cols.size() > 2) && cols.get(1).ownText().equalsIgnoreCase("name") && cols.get(2).ownText().equalsIgnoreCase("position")){
-                    handlePlayerTable(table);
-                }
-                else if ((cols.size() > 2) && cols.get(0).ownText().equalsIgnoreCase("date") && cols.get(1).ownText().equalsIgnoreCase("opponent")){
-                    handleGameTable(table);
-                } else {
-                    System.err.println("Unknown table");
-                }
-            }
-        }
+  }
 
-    }
+  def handlePlayerTable(table: Element): Iterator[(String, String, String, String, String )] = {
+    val rows = table.select("tbody tr")
+    rows.iterator().asScala.map(row => {
+      val cells = row.select("td")
+      if (cells.size() > 1) {
+        val number = cells.get(0).ownText()
+        val name = cells.get(1).ownText()
+        val pos = if (cells.size() > 2) cells.get(2).ownText() else ""
+        val hgt = if (cells.size() > 3) cells.get(3).ownText() else ""
+        val cls = if (cells.size() > 4) cells.get(4).ownText() else ""
+        println(number + " " + name + " " + pos)
+        Some((number, name, pos, hgt, cls))
+      } else {
+        None
+      }
+    }).flatten
+  }
 
-    private static void handlePlayerTable(Element table) {
-        final Elements rows = table.select("tbody tr");
-        for (Element row : rows) {
-            final Elements cells = row.select("td");
-            if (cells.size()>1) {
-                String number = cells.get(0).ownText();
-                String name = cells.get(1).ownText();
-                String pos = (cells.size() > 2) ? cells.get(2).ownText() : "";
-                String hgt = (cells.size() > 3) ? cells.get(3).ownText() : "";
-                String cls = (cells.size() > 4) ? cells.get(4).ownText() : "";
-                System.err.println(number+" "+name+ " "+pos);
-            }
-        }
-    }
+  def handleGameTable(table: Element): Iterator[(String, String, String, String)] = {
+    val rows = table.select("tbody tr")
+    rows.iterator().asScala.map(row => {
+      val cells = row.select("td")
+      if (cells.size() > 1) {
+        val date = cells.get(0).ownText()
+        val ha = cells.get(1).ownText()
+        val oppLink = cells.get(1).select("a")
+        val oppKey = oppLink.get(0).attr("href").replace("/schools/", "")
+        val oppName = oppLink.get(0).ownText()
 
-    private static void handleGameTable(Element table) {
-        final Elements rows = table.select("tbody tr");
-        for (Element row : rows) {
-            final Elements cells = row.select("td");
-            if (cells.size()>1) {
-                String date = cells.get(0).ownText();
-                String ha = cells.get(1).ownText();
-                final Elements oppLink = cells.get(1).select("a");
-                String oppKey = oppLink.get(0).attr("href").replace("/schools/","");
-                String oppName = oppLink.get(0).ownText();
-
-                System.err.println(date+" "+ha+" "+oppKey+" "+oppName);
-            }
-        }
-    }
+        Some((date, ha , oppKey, oppName))
+      }                                   else {
+        None
+      }
+    }).flatten
+  }
 
 
 }

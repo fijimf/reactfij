@@ -1,6 +1,8 @@
-package model.scraping.model
+package model.scraping.data
 
-case class PlayerTotals(
+case class PlayerHeader(
+                         position: String,
+                         minutesPlayed: String,
                          fieldGoalsMade: String,
                          threePointsMade: String,
                          freeThrowsMade: String,

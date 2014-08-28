@@ -1,7 +1,7 @@
 package model.scraping.actors
 
 import akka.actor.Actor
-import model.scraping.model.GameInfo
+import model.scraping.data.GameInfo
 import org.joda.time.{DateTime, LocalDate}
 
 class GameCoordinator extends Actor{

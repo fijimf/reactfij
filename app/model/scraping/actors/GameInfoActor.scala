@@ -1,7 +1,7 @@
 package model.scraping.actors
 
 import akka.actor.{Actor, Props}
-import model.scraping.model.GameInfo
+import model.scraping.data.GameInfo
 import model.scraping.scrapers.GameInfoScraper
 import play.api.Logger
 

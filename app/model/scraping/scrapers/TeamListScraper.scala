@@ -2,7 +2,7 @@ package model.scraping.scrapers
 
 import java.io.PrintStream
 
-import model.scraping.model._
+import model.scraping.data._
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._

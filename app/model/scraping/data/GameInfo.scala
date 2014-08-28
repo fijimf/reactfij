@@ -1,4 +1,4 @@
-package model.scraping.model
+package model.scraping.data
 
 import java.util.TimeZone
 

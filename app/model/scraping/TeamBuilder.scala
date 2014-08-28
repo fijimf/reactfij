@@ -1,3 +1,3 @@
 package model.scraping
 
-case class TeamBuilder(data:Map
+case class TeamBuilder(data:Map[String, String] )

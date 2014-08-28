@@ -1,7 +1,7 @@
 package model.scraping.actors
 
 import akka.actor.{Props, Actor}
-import model.scraping.model.TeamLink
+import model.scraping.data.TeamLink
 import model.scraping.scrapers.TeamListScraper
 import org.joda.time.LocalDate
 import play.api.data.validation.ValidationError
@@ -18,7 +18,7 @@ case class TeamMap(fieldKeys:Set[String], data:Map[String,Map[String,Any]]) {
 
 case class UpdateSeason(start:LocalDate, end:LocalDate, teamData:Map[String,Map[String,Any]])
 class NcaaSeasonUpdater extends Actor {
-  val sbd = context.actorOf[Props[DailyScoreboardActor]]
+ // val sbd = context.actorOf[Props[DailyScoreboardActor]]
   def receive:Receive = {
     case UpdateSeason(start, end, teamData) =>
       val kernelFut: Future[Either[Seq[(JsPath, Seq[ValidationError])], Map[String, Map[String, Object]]]] = TeamListScraper.loadTeamList((links: Seq[TeamLink]) => {
@@ -29,16 +29,16 @@ class NcaaSeasonUpdater extends Actor {
           }
         })
       })
-      kernelFut.map((e: Either[Seq[(JsPath, Seq[ValidationError])], Map[String, Map[String, Object]]]) =>
-        e match {
-          case Left(_) =>
-          case Right(teamKernel) => {
-            Iterator.iterate(start)(_.plusDays(1)).takeWhile(_.isBefore(end)).foreach(date=>{
-
-            })
-          }
-        }
-                   )
+//      kernelFut.map((e: Either[Seq[(JsPath, Seq[ValidationError])], Map[String, Map[String, Object]]]) =>
+//        e match {
+//          case Left(_) =>
+//          case Right(teamKernel) => {
+//            Iterator.iterate(start)(_.plusDays(1)).takeWhile(_.isBefore(end)).foreach(date=>{
+//
+//            })
+//          }
+//        }
+//                   )
 
   }
 

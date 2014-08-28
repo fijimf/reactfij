@@ -8,6 +8,7 @@ scalaVersion := "2.11.1"
 
 libraryDependencies ++= Seq(
                              "org.mongodb" %% "casbah" % "2.7.3",
+                             "org.jsoup" % "jsoup" %"1.7.3",
                              jdbc,
                              anorm,
                              cache,

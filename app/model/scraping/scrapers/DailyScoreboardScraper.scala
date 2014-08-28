@@ -2,7 +2,7 @@ package model.scraping.scrapers
 
 import java.io.PrintStream
 
-import model.scraping.model.{Scoreboards, Scoreboard}
+import model.scraping.data.{Scoreboards, Scoreboard}
 import org.joda.time.LocalDate
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import play.api.data.validation.ValidationError

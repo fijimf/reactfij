@@ -2,7 +2,7 @@ package model.scraping.scrapers
 
 import java.io.PrintStream
 
-import model.scraping.model._
+import model.scraping.data._
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.joda.time.{LocalDate, LocalTime}
 import play.api.Logger

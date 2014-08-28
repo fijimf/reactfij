@@ -1,3 +1,3 @@
-package model.scraping.model
+package model.scraping.data
 
 case class Scoreboards(scoreboard: Seq[Scoreboard])
