@@ -3,6 +3,7 @@ package model.scraping.scrapers
 import org.jsoup._
 import org.jsoup.nodes._
 import org.jsoup.select._
+import play.api.Logger
 import play.api.libs.ws.WS
 
 import scala.concurrent.Future
@@ -17,9 +18,12 @@ case object BasketballTeamPageScraper {
   import scala.collection.JavaConverters._
 
   def loadPage[T](key: String): Future[Map[String, Any]] = {
+    Logger.info("Loading "+key)
     WS.url(f"http://www.ncaa.com/schools/$key%s/basketball-men").get().map(s => {
       val d: Document = Jsoup.parse(s.body)
-      extractMeta(d).toMap ++ extractTables(d)
+      val meta: Iterator[(String, String)] = extractMeta(d)
+      Logger.info(meta.toMap.toString())
+      meta.toMap ++ extractTables(d)
     })
   }
 

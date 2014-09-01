@@ -5,7 +5,6 @@ import java.io.PrintStream
 import model.scraping.data._
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.joda.time.{LocalDate, LocalTime}
-import play.api.Logger
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
