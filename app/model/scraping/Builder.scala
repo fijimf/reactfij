@@ -15,6 +15,5 @@ case class Builder(keyField:String, data:Map[String, Any] ){
       Builder(keyField, data++updateData)
     }
   }
-
 }
 

@@ -1,11 +1,14 @@
 package model.scraping
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.Status.Success
+import akka.util.Timeout
 import model.scraping.data.TeamLink
 import play.api.data.validation.ValidationError
 import play.api.libs.json.JsPath
 import scrapers._
-import actors.{DailyScoreboardActor, GameInfoActor}
+import model.scraping.actors.{TeamCoordinator, DailyScoreboardActor, GameInfoActor}
 import akka.actor.{ActorRef, ActorSystem, Props}
 import org.joda.time.LocalDate
 
@@ -18,36 +21,23 @@ object ActorTest {
 
   def main(args: Array[String]) {
     new play.core.StaticApplication(new java.io.File("."))
-    val teamList: Future[Either[Seq[(JsPath, Seq[ValidationError])], Map[String, Map[String, Any]]]] = TeamListScraper.loadTeamList((seq: Seq[TeamLink]) => {
-      seq.foldLeft(Map.empty[String, Map[String, Any]])((data: Map[String, Map[String, Any]], link: TeamLink) => {
-        link match {
-          case TeamLink(Some(name), url) => data + (url -> Map("baseName" -> name, "key" -> url))
-          case _ => data
+    implicit val timeout = Timeout(15, TimeUnit.SECONDS)
+    val system: ActorSystem = ActorSystem("deepfij")
+    val tc: ActorRef = system.actorOf(Props[TeamCoordinator], "team-coordinator")
+    tc ! TeamCoordinator.Start
+
+    while (true)
+      akka.pattern.ask(tc, TeamCoordinator.Status).onComplete((value: Try[Any]) => {
+        for (v <- value) {
+          v match {
+            case Success(tup) => println("*********** " + tup.toString)
+            case _ =>
+          }
         }
       })
-    })
-    val z: Future[Map[String, Map[String, Any]]] = teamList.map((x: Either[Seq[(JsPath, Seq[ValidationError])], Map[String, Map[String, Any]]]) => {
-      x match {
-        case Left(tup) => Map.empty[String, Map[String, Any]]
-        case Right(data) => data
-      }
-    })
-    val zz: Future[Map[String, Map[String, Any]]] = z.flatMap(mapBasketballPage)
-    zz
-
-    val value: Any = zz.foreach(println(_))
-
-    //    TeamPageScraper.loadPage("villanova").onComplete((triedMap: Try[Map[String, Any]]) => {
-    //      triedMap.foreach((map: Map[String, Any]) => println(map))
-    //    })
-    //TeamPageScraper.loadPage("villanova")
-    //
-    //    val system: ActorSystem = ActorSystem("deepfij")
-    //    val sa: ActorRef = system.actorOf(Props[DailyScoreboardActor], "scoreboard")
-    //    val ga: ActorRef = system.actorOf(Props[GameInfoActor], "gameinfo")
-    //    sa ! new LocalDate(2014, 2, 12)
-
   }
+
+
 
   def mapBasketballPage(data: Map[String, Map[String, Any]]): Future[Map[String, Map[String, Any]]] = {
     val keys: Iterable[String] = data.keys

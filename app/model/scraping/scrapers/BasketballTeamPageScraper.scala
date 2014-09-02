@@ -112,9 +112,9 @@ case object BasketballTeamPageScraper {
 
   def createGameMap(cells: Elements): Map[String, String] = {
     if (cells.size() > 1) {
-     val oppLink = cells.get(1).select("a")
+      val oppLink = cells.get(1).select("a")
       Map("date" -> cells.get(0).ownText(),
-           "ha" -> cells.get(1).ownText(),
+           "ha" -> (if ("@" == cells.get(1).ownText()) "away" else "home"),
            "oppKey" -> oppLink.get(0).attr("href").replace("/schools/", ""),
            "oppName" -> oppLink.get(0).ownText())
     } else {
