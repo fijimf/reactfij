@@ -8,7 +8,7 @@ import model.scraping.data.TeamLink
 import play.api.data.validation.ValidationError
 import play.api.libs.json.JsPath
 import scrapers._
-import model.scraping.actors.{TeamCoordinator, DailyScoreboardActor, GameInfoActor}
+import model.scraping.actors.{TeamBuilder, TeamCoordinator, DailyScoreboardActor, GameInfoActor}
 import akka.actor.{ActorRef, ActorSystem, Props}
 import org.joda.time.LocalDate
 
@@ -21,20 +21,22 @@ object ActorTest {
 
   def main(args: Array[String]) {
     new play.core.StaticApplication(new java.io.File("."))
-    implicit val timeout = Timeout(15, TimeUnit.SECONDS)
-    val system: ActorSystem = ActorSystem("deepfij")
-    val tc: ActorRef = system.actorOf(Props[TeamCoordinator], "team-coordinator")
-    tc ! TeamCoordinator.Start
-
-    while (true)
-      akka.pattern.ask(tc, TeamCoordinator.Status).onComplete((value: Try[Any]) => {
-        for (v <- value) {
-          v match {
-            case Success(tup) => println("*********** " + tup.toString)
-            case _ =>
-          }
+    TeamListScraper.loadTeamList().map((teamLinks: Seq[TeamLink]) => {
+      teamLinks.foldLeft(Map.empty[String, TeamBuilder])((data: Map[String, TeamBuilder], link: TeamLink) => {
+        link match {
+          case TeamLink(Some(name), key) => data + (key -> TeamBuilder(key, name))
+          case TeamLink(None, key) => data
         }
       })
+    }).map((data: Map[String, TeamBuilder]) => {
+      data.foldLeft(Map.empty[String, TeamBuilder])((enrichedData: Map[String, TeamBuilder], tup: (String, TeamBuilder)) => {
+        val k = tup._1
+        val d = tup._2
+        val pageData = TeamPageScraper.loadPage(k)
+        val bbPageData = BasketballTeamPageScraper.loadPage(k)
+
+      })
+    })
   }
 
 

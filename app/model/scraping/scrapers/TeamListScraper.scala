@@ -4,7 +4,6 @@ import java.io.PrintStream
 
 import model.scraping.data._
 import play.api.Logger
-import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
@@ -23,12 +22,12 @@ case object TeamListScraper {
                                                   )(TeamLink.apply _)
 
 
-  def loadTeamList[T](f: Seq[TeamLink] => T = dumpTeamList): Future[Either[Seq[(JsPath, Seq[ValidationError])], T]] = {
+  def loadTeamList[T](): Future[Seq[TeamLink]] = {
     WS.url("http://www.ncaa.com/sites/default/files/json/schools.json").get().map(s => {
       Logger.info("Received response from ncaa")
       Json.fromJson[Seq[TeamLink]](Json.parse(s.body)) match {
-        case JsSuccess(ts, _) => Right(f(ts))
-        case JsError(errors) => Left(errors)
+        case JsSuccess(ts, _) => ts
+        case JsError(errors) =>  Seq.empty[TeamLink]
       }
     })
   }
