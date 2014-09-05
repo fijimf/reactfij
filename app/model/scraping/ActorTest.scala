@@ -32,14 +32,27 @@ object ActorTest {
       data.foldLeft(Map.empty[String, TeamBuilder])((enrichedData: Map[String, TeamBuilder], tup: (String, TeamBuilder)) => {
         val k = tup._1
         val d = tup._2
-        val pageData = TeamPageScraper.loadPage(k)
         val bbPageData = BasketballTeamPageScraper.loadPage(k)
+        val pageData = TeamPageScraper.loadPage(k)
 
+        val zzzzz: Future[Map[String, TeamBuilder]] = (for (pdData <- pageData;
+                                                          bbPdData <- bbPageData) yield {
+          k -> d.copy(
+                       division = pdData.get("Division:"),
+                       conference = pdData.get("Conference:"),
+                       officialUrl = pdData.get("officialUrl"),
+                       twitterUrl = pdData.get("twitterUrl"),
+                       twitterHandle = pdData.get("twitterId"),
+                       facebookUrl = pdData.get("facebookUrl"),
+                       facebookPage = pdData.get("facebookPage")
+                     )
+        }).map(f => enrichedData + f)
+        zzzzz
       })
     })
   }
 
-
+ 
 
   def mapBasketballPage(data: Map[String, Map[String, Any]]): Future[Map[String, Map[String, Any]]] = {
     val keys: Iterable[String] = data.keys
