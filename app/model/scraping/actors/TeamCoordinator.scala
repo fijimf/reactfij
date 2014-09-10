@@ -47,32 +47,32 @@ class TeamCoordinator extends Actor {
 
   override def receive: Receive = {
     case Start =>{
-      Logger.info("Starting team coordinator")
-      TeamListScraper.loadTeamList((seq: Seq[TeamLink]) => {
-        seq.foldLeft(Map.empty[String, TeamBuilder])((results: Map[String, TeamBuilder], link: TeamLink) => {
-          link.name match {
-            case Some(t) => results + (link.url -> TeamBuilder(link.url, t))
-            case _ => results
-          }
-        })
-      }).onComplete((t: Try[Either[_, Map[String, TeamBuilder]]]) => {
-        Logger.info("Received team list.  Submitteing requests")
-        for (tt<-t) yield {
-          tt match {
-            case Left(_) =>
-            case Right(map) => {
-               teamData=Some(map)
-               teamPageRequest=Some(map.keySet)
-               basketballTeamPageRequest=Some(map.keySet)
-               map.keys.foreach(k=>{
-                  tpa ! TeamPageReq(k)
-                  btpa ! BasketballTeamPageReq(k)
-               })
-            }
-          }
-        }
-        Logger.info("Done submitting requests")
-      })
+//      Logger.info("Starting team coordinator")
+//      TeamListScraper.loadTeamList((seq: Seq[TeamLink]) => {
+//        seq.foldLeft(Map.empty[String, TeamBuilder])((results: Map[String, TeamBuilder], link: TeamLink) => {
+//          link.name match {
+//            case Some(t) => results + (link.url -> TeamBuilder(link.url, t))
+//            case _ => results
+//          }
+//        })
+//      }).onComplete((t: Try[Either[_, Map[String, TeamBuilder]]]) => {
+//        Logger.info("Received team list.  Submitteing requests")
+//        for (tt<-t) yield {
+//          tt match {
+//            case Left(_) =>
+//            case Right(map) => {
+//               teamData=Some(map)
+//               teamPageRequest=Some(map.keySet)
+//               basketballTeamPageRequest=Some(map.keySet)
+//               map.keys.foreach(k=>{
+//                  tpa ! TeamPageReq(k)
+//                  btpa ! BasketballTeamPageReq(k)
+//               })
+//            }
+//          }
+//        }
+//        Logger.info("Done submitting requests")
+//      })
     }
     case BasketballTeamPageResp(url, data)=>{
       Logger.info("Handing basketball page - "+url)

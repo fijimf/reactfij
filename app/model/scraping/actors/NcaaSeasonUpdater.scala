@@ -21,14 +21,14 @@ class NcaaSeasonUpdater extends Actor {
  // val sbd = context.actorOf[Props[DailyScoreboardActor]]
   def receive:Receive = {
     case UpdateSeason(start, end, teamData) =>
-      val kernelFut: Future[Either[Seq[(JsPath, Seq[ValidationError])], Map[String, Map[String, Object]]]] = TeamListScraper.loadTeamList((links: Seq[TeamLink]) => {
-        links.foldLeft(Map.empty[String, Map[String, Object]])((d: Map[String, Map[String, Object]], link: TeamLink) => {
-          link.name match {
-            case Some(n) => d + (link.url -> Map("key" -> link.url, "name" -> n))
-            case None => d
-          }
-        })
-      })
+//      val kernelFut: Future[Either[Seq[(JsPath, Seq[ValidationError])], Map[String, Map[String, Object]]]] = TeamListScraper.loadTeamList((links: Seq[TeamLink]) => {
+//        links.foldLeft(Map.empty[String, Map[String, Object]])((d: Map[String, Map[String, Object]], link: TeamLink) => {
+//          link.name match {
+//            case Some(n) => d + (link.url -> Map("key" -> link.url, "name" -> n))
+//            case None => d
+//          }
+//        })
+//      })
 //      kernelFut.map((e: Either[Seq[(JsPath, Seq[ValidationError])], Map[String, Map[String, Object]]]) =>
 //        e match {
 //          case Left(_) =>
