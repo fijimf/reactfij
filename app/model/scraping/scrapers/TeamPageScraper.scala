@@ -31,7 +31,7 @@ case object TeamPageScraper {
   }
 
   def extractSocial(d: Document): Map[String, String] = {
-    extractSocialItem(d, "school-social-website", "officalUrl", "officialWebsite") ++
+    extractSocialItem(d, "school-social-website", "officialUrl", "officialWebsite") ++
       extractSocialItem(d, "school-social-twitter", "twitterUrl", "twitterId") ++
       extractSocialItem(d, "school-social-facebook", "facebookUrl", "facebookPage")
   }

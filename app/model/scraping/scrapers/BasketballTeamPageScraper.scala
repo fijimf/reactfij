@@ -22,7 +22,6 @@ case object BasketballTeamPageScraper {
     WS.url(f"http://www.ncaa.com/schools/$key%s/basketball-men").get().map(s => {
       val d: Document = Jsoup.parse(s.body)
       val meta: Iterator[(String, String)] = extractMeta(d)
-      Logger.info(meta.toMap.toString())
       meta.toMap ++ extractTables(d)
     })
   }
