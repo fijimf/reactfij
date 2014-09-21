@@ -1,15 +1,10 @@
 package model.scraping
 
 import java.util.concurrent.TimeUnit
-
-import akka.actor._
-import akka.util.Timeout
+import com.mongodb.casbah.Imports._
 import model.scraping.actors.{GameStub, PlayerStub, TeamBuilder}
 import model.scraping.data.TeamLink
 import model.scraping.scrapers._
-import play.api.libs.ws.WS
-
-import scala.collection.immutable.IndexedSeq
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
@@ -64,9 +59,11 @@ object TeamLoader {
 
   def main(args: Array[String]) {
     new play.core.StaticApplication(new java.io.File("."))
+    val client = MongoClient("localhost", 27017)
+
     val result: Iterable[(String, TeamBuilder)] = Await.result(load(), Duration(15, TimeUnit.MINUTES))
     result.foreach((tuple: (String, TeamBuilder)) => {
-      println(tuple._2)
+      TeamBuilder.upsertTeam(client, tuple._2)
     })
   }
 }

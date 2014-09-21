@@ -1,5 +1,9 @@
 package model.scraping.actors
 
+import com.mongodb.casbah.{TypeImports, Imports}
+import com.mongodb.casbah.Imports._
+import play.api.Logger
+
 case class TeamBuilder
 (
   key: String,
@@ -18,7 +22,40 @@ case class TeamBuilder
   twitterUrl: Option[String] = None,
   playerStubs: List[PlayerStub] = List.empty[PlayerStub],
   gameStubs: List[GameStub] = List.empty[GameStub]
-  )
+  ) {
+  def toMongoObj: Imports.MongoDBObject = {
+    new MongoDBObject(
+                       Map("key" -> key,
+                            "name" -> name) ++
+                         List("division" -> division,
+                               "conference" -> conference,
+                               "colorNames" -> colorNames,
+                               "nickname" -> nickname,
+                               "location" -> location,
+                               "color" -> color,
+                               "logoUrl" -> logoUrl,
+                               "officialUrl" -> officialUrl,
+                               "facebookPage" -> facebookPage,
+                               "facebookUrl" -> facebookUrl,
+                               "twitterHandle" -> twitterHandle,
+                               "twitterUrl" -> twitterUrl).filter(_._2.isDefined).map(t => t._1 -> t._2.get).toMap ++
+                         Map("players" -> playerStubs.map(p => Map("number" -> p.number, "name" -> name, "pos" -> p.pos, "height" -> p.height, "year" -> p.year))) ++
+                         Map("games" -> gameStubs.map(g => Map("date" -> g.date, "homeAway" -> g.homeAway, "oppKey" -> g.oppKey)))
+                     )
+  }
+}
+
+object TeamBuilder {
+  def upsertTeam(client: MongoClient, tb: TeamBuilder) = {
+    val db = client("deepfij")
+    val collection = db("teams")
+    val q: Imports.MongoDBObject = new Imports.MongoDBObject(Map("_id" -> tb.key))
+    val flag: Imports.MongoDBObject = new Imports.MongoDBObject(Map("multi" -> false, "upsert" -> true))
+    collection.update(q, tb.toMongoObj, upsert = true, multi = false)
+    //Logger.info(result)
+  }
+}
+
 
 case class PlayerStub(number: String, name: String, pos: String, height: String, year: String)
 
@@ -40,7 +77,6 @@ case class GameStub(date: String, homeAway: String, oppKey: String)
 
 object GameStub {
   def fromMap(data: Map[String, String]): Option[GameStub] = {
-
     for (
       date <- data.get("date");
       homeAway <- data.get("ha");
