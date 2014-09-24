@@ -1,6 +1,7 @@
 package model.scraping
 
 import java.util.concurrent.TimeUnit
+import com.mongodb.casbah
 import com.mongodb.casbah.Imports._
 import model.scraping.actors.{GameStub, PlayerStub, TeamBuilder}
 import model.scraping.data.TeamLink
@@ -61,9 +62,13 @@ object TeamLoader {
     new play.core.StaticApplication(new java.io.File("."))
     val client = MongoClient("localhost", 27017)
 
+    loadTeamKernel(client,"2013-14")
+  }
+
+  def loadTeamKernel(client: casbah.MongoClient, seasonKey:String) {
     val result: Iterable[(String, TeamBuilder)] = Await.result(load(), Duration(15, TimeUnit.MINUTES))
     result.foreach((tuple: (String, TeamBuilder)) => {
-      TeamBuilder.upsertTeam(client, tuple._2)
+      TeamBuilder.upsertTeam(client, tuple._2, seasonKey)
     })
   }
 }
