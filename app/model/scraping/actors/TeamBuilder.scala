@@ -2,9 +2,8 @@ package model.scraping.actors
 
 import java.io.Serializable
 
-import com.mongodb.casbah.{TypeImports, Imports}
+import com.mongodb.casbah.Imports
 import com.mongodb.casbah.Imports._
-import play.api.Logger
 
 case class TeamBuilder
 (
