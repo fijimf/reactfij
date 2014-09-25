@@ -6,14 +6,21 @@ import com.mongodb.casbah.Imports._
 import model.scraping.actors.{GameStub, PlayerStub, TeamBuilder}
 import model.scraping.data.TeamLink
 import model.scraping.scrapers._
+import org.joda.time.LocalDate
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
+case class ScheduleBuilder(date:LocalDate)
+case class TeamEnricher(key: String, logoUrl:String)
 object ScheduleLoader {
 
+
+  type GameData = Iterable[(LocalDate,ScheduleBuilder)]
+  type TeamData = Iterable[(String, TeamEnricher)]
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  def load(): Future[Iterable[(String, TeamBuilder)]] = {
+  def load(start:LocalDate, end:LocalDate): Future[(GameData, TeamData)] = {
+    Iterator.iterate(from)(_.plus(step)).takeWhile(!_.isAfter(to))
     val teamList: Future[Map[String, TeamBuilder]] = TeamListScraper.loadTeamList().map((teamLinks: Seq[TeamLink]) => {
       teamLinks.foldLeft(Map.empty[String, TeamBuilder])((data: Map[String, TeamBuilder], link: TeamLink) => {
         link match {
