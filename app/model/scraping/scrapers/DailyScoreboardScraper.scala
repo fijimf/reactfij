@@ -5,6 +5,7 @@ import java.io.PrintStream
 import model.scraping.data.{Scoreboards, Scoreboard}
 import org.joda.time.LocalDate
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+import play.api.Logger
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
@@ -26,17 +27,22 @@ case object DailyScoreboardScraper {
 
   implicit def scoreboardsReads: Reads[Scoreboards] = (JsPath \ "scoreboard").read[Seq[Scoreboard]].map(Scoreboards)
 
-  def loadDate[T](date: LocalDate, f: Scoreboards => T = dumpGames): Future[Either[Seq[(JsPath, Seq[ValidationError])], T]] = {
+  def loadDate[T](date: LocalDate, f: Scoreboards => T = dumpGames): Future[Either[Any, T]] = {
     loadDate(date.getYear, date.getMonthOfYear, date.getDayOfMonth, f)
   }
 
-  def loadDate[T](year: Int, month: Int, day: Int, f: Scoreboards => T): Future[Either[Seq[(JsPath, Seq[ValidationError])], T]] = {
+  def loadDate[T](year: Int, month: Int, day: Int, f: Scoreboards => T): Future[Either[Any, T]] = {
     val url: String = scoreboardUrl(year, month, day)
-    WS.url(url).get().map(unwrapJson).map(s => {
+    Logger.info("Loading scorebpard url " + url)
+    WS.url(url).get().map(unwrapJson).map(s => try { {
       Json.fromJson[Scoreboards](Json.parse(s)) match {
         case JsSuccess(scoreboards, _) => Right(f(scoreboards))
         case JsError(errors) => Left(errors)
       }
+    }
+    }
+    catch {
+      case (ex: Throwable) => Left(ex)
     })
   }
 

@@ -4,78 +4,53 @@ import java.util.concurrent.TimeUnit
 import com.mongodb.casbah
 import com.mongodb.casbah.Imports._
 import model.scraping.actors.{GameStub, PlayerStub, TeamBuilder}
-import model.scraping.data.TeamLink
+import model.scraping.data.{GameInfo, Scoreboard, Scoreboards, TeamLink}
 import model.scraping.scrapers._
-import org.joda.time.LocalDate
+import org.joda.time.{Days, ReadablePeriod, LocalDate}
+import play.api.data.validation.ValidationError
+import play.api.libs.json.JsPath
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-case class ScheduleBuilder(date:LocalDate)
-case class TeamEnricher(key: String, logoUrl:String)
 object ScheduleLoader {
 
-
-  type GameData = Iterable[(LocalDate,ScheduleBuilder)]
-  type TeamData = Iterable[(String, TeamEnricher)]
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  def load(start:LocalDate, end:LocalDate): Future[(GameData, TeamData)] = {
-    Iterator.iterate(from)(_.plus(step)).takeWhile(!_.isAfter(to))
-    val teamList: Future[Map[String, TeamBuilder]] = TeamListScraper.loadTeamList().map((teamLinks: Seq[TeamLink]) => {
-      teamLinks.foldLeft(Map.empty[String, TeamBuilder])((data: Map[String, TeamBuilder], link: TeamLink) => {
-        link match {
-          case TeamLink(Some(name), key) => data + (key -> TeamBuilder(key, name))
-          case TeamLink(None, key) => data
+  def load(start:LocalDate, end:LocalDate): Future[Iterable[GameInfo]] = {
+    val dates: List[LocalDate] = Iterator.iterate(start)(_.plus(Days.ONE)).takeWhile(!_.isAfter(end)).toList
+    val map: List[Future[Option[Scoreboard]]] = dates.map((date: LocalDate) => {
+      DailyScoreboardScraper.loadDate(date, _.scoreboard.headOption).map {
+        case Left(_) => None
+        case Right(x) => x
+      }
+    })
+    map.map(_.flatMap(ms=>{
+      case Some(sb)=>{
+        sb.
+      }
+      case None=> future(None)
+    }))
+    scoreboards.map(_.map((sb: Scoreboard) =>{
+      val data:Seq[Future[Option[GameInfo]]]=sb.games.map(gameInfoUrl => {
+        GameInfoScraper.loadGameUrl[GameInfo](gameInfoUrl, (info: GameInfo) => info).map {
+          case Left(_) => None
+          case Right(x) => Some(x)
         }
       })
-    })
-
-    val enricher: Throttler[(String, TeamBuilder), (String, TeamBuilder)] = new Throttler[(String, TeamBuilder), (String, TeamBuilder)]((tup: (String, TeamBuilder)) => enrichTeam(tup._1, tup._2))
-
-    teamList.flatMap((tl: Map[String, TeamBuilder]) => {
-      val futures: Iterable[Future[(String, TeamBuilder)]] = tl.map((tuple: (String, TeamBuilder)) => {
-        enricher(tuple)
-      })
-      Future.sequence(futures)
-    })
-  }
-
-  def enrichTeam(key: String, tb: TeamBuilder): Future[(String, TeamBuilder)] = {
-    val bbPageData = BasketballTeamPageScraper.loadPage(key)
-    val pageData = TeamPageScraper.loadPage(key)
-
-    for (pdData <- pageData;
-         bbPdData <- bbPageData) yield {
-      val ps: Option[List[PlayerStub]] = bbPdData.get("players").map(_.asInstanceOf[List[Map[String, String]]]).map(_.flatMap(data => PlayerStub.fromMap(data)))
-      val gs: Option[List[GameStub]] = bbPdData.get("games").map(_.asInstanceOf[List[Map[String, String]]]).map(_.flatMap(data => GameStub.fromMap(data)))
-      key -> tb.copy(
-                      division = bbPdData.get("Division:").map(_.asInstanceOf[String]),
-                      conference = bbPdData.get("Conf:").map(_.asInstanceOf[String]),
-                      colorNames = pdData.get("Colors:"),
-                      nickname = pdData.get("Nickname:"),
-                      location = pdData.get("Location:"),
-                      officialUrl = pdData.get("officialUrl"),
-                      twitterUrl = pdData.get("twitterUrl"),
-                      twitterHandle = pdData.get("twitterId"),
-                      facebookUrl = pdData.get("facebookUrl"),
-                      facebookPage = pdData.get("facebookPage"),
-                      playerStubs = ps.getOrElse(tb.playerStubs),
-                      gameStubs = gs.getOrElse(tb.gameStubs)
-                    )
-    }
+                   data                       }
+                   ))
   }
 
   def main(args: Array[String]) {
     new play.core.StaticApplication(new java.io.File("."))
-    val client = MongoClient("localhost", 27017)
 
-    loadTeamKernel(client,"2013-14")
+    loadSchedule("2013-14", new LocalDate(2013,12,1), new LocalDate(2014,1,1) )
   }
 
-  def loadTeamKernel(client: casbah.MongoClient, seasonKey:String) {
-    val result: Iterable[(String, TeamBuilder)] = Await.result(load(), Duration(15, TimeUnit.MINUTES))
-    result.foreach((tuple: (String, TeamBuilder)) => {
-      TeamBuilder.upsertTeam(client, tuple._2, seasonKey)
-    })
+  def loadSchedule(seasonKey:String, from:LocalDate, to:LocalDate) {
+    val eventualScoreboards: Future[Iterable[Scoreboard]] = load(from, to)
+    val result: Iterable[Scoreboard] = Await.result(eventualScoreboards, Duration(5,TimeUnit.MINUTES))
+
+    println(result)
   }
 }
