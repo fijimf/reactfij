@@ -5,6 +5,7 @@ import java.io.PrintStream
 import model.scraping.data._
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.joda.time.{LocalDate, LocalTime}
+import play.api.Logger
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
@@ -92,11 +93,19 @@ case object GameInfoScraper {
                                                     )(GameLinks.apply _)
 
 
-  def loadGameUrl[T](url: String, f: GameInfo => T = dumpGameInfo): Future[Either[Seq[(JsPath, Seq[ValidationError])], T]] = {
+  def loadGameUrl[T](url: String, f: GameInfo => T = dumpGameInfo): Future[Either[Any, T]] = {
     WS.url(url).get().map(unwrapJson).map(s => {
-      Json.fromJson[GameInfo](Json.parse(s)) match {
-        case JsSuccess(scoreboards, _) => Right(f(scoreboards))
-        case JsError(errors) => Left(errors)
+      try {
+        Json.fromJson[GameInfo](Json.parse(s)) match {
+          case JsSuccess(scoreboards, _) => Right(f(scoreboards))
+          case JsError(errors) => Left(errors)
+        }
+      }
+      catch {
+        case ex:Throwable =>
+          Logger.warn("Failed loading " + url + ". " + ex.getMessage)
+          Left(ex)
+
       }
     })
   }

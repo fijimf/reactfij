@@ -10,35 +10,34 @@ import org.joda.time.{Days, ReadablePeriod, LocalDate}
 import play.api.data.validation.ValidationError
 import play.api.libs.json.JsPath
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Promise, Await, Future}
 
 object ScheduleLoader {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  def gameInfo(url:String): Future[Option[GameInfo]] = {
+
+    GameInfoScraper.loadGameUrl[GameInfo](url.replace( """/sites/default/files/data""", """http://data.ncaa.com/jsonp"""), (info: GameInfo) => info).map {
+      case Left(_) => None
+      case Right(x) => Some(x)
+    }
+  }
+
   def load(start:LocalDate, end:LocalDate): Future[Iterable[GameInfo]] = {
     val dates: List[LocalDate] = Iterator.iterate(start)(_.plus(Days.ONE)).takeWhile(!_.isAfter(end)).toList
-    val map: List[Future[Option[Scoreboard]]] = dates.map((date: LocalDate) => {
+    val lfos: List[Future[Option[Scoreboard]]] = dates.map((date: LocalDate) => {
       DailyScoreboardScraper.loadDate(date, _.scoreboard.headOption).map {
         case Left(_) => None
         case Right(x) => x
       }
     })
-    map.map(_.flatMap(ms=>{
-      case Some(sb)=>{
-        sb.
+    Future.sequence(lfos.map(fos => fos.flatMap((os: Option[Scoreboard]) => {
+      os match {
+        case Some(sb: Scoreboard) => Future.sequence(sb.games.map(gameInfo(_))).map(_.flatten)
+        case None => Future(Seq.empty[GameInfo])
       }
-      case None=> future(None)
-    }))
-    scoreboards.map(_.map((sb: Scoreboard) =>{
-      val data:Seq[Future[Option[GameInfo]]]=sb.games.map(gameInfoUrl => {
-        GameInfoScraper.loadGameUrl[GameInfo](gameInfoUrl, (info: GameInfo) => info).map {
-          case Left(_) => None
-          case Right(x) => Some(x)
-        }
-      })
-                   data                       }
-                   ))
+    }))).map(_.flatten)
   }
 
   def main(args: Array[String]) {
@@ -48,9 +47,11 @@ object ScheduleLoader {
   }
 
   def loadSchedule(seasonKey:String, from:LocalDate, to:LocalDate) {
-    val eventualScoreboards: Future[Iterable[Scoreboard]] = load(from, to)
-    val result: Iterable[Scoreboard] = Await.result(eventualScoreboards, Duration(5,TimeUnit.MINUTES))
+    val eventualScoreboards: Future[Iterable[GameInfo]] = load(from, to)
+    val result: Iterable[GameInfo] = Await.result(eventualScoreboards, Duration(5,TimeUnit.MINUTES))
 
-    println(result)
+    result.foreach(gi=>println(gi))
   }
 }
+
+
