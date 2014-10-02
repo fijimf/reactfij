@@ -114,7 +114,7 @@ case object GameInfoScraper {
 
 
   def showGameInfo(s: GameInfo, out: PrintStream): Unit = {
-    out.println(s.id + " " + s.away.name + " @ " + s.home.name + " " + s.startDate)
+    out.println(s.id + " " + s.away.schoolLink + " @ " + s.home.schoolLink + " " + s.startDate)
   }
 
   def unwrapJson(ws: WSResponse): String = {

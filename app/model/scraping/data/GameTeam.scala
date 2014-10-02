@@ -4,10 +4,10 @@ package model.scraping.data
 case class GameTeam(
                      teamRank: String,
                      iconURL: String,
+                     schoolLink: String,
                      name: String,
-                     nameRaw: String,
-                     nameSeo: String,
-                     shortname: String,
+                     key: String,
+                     code: String,
                      color: String,
                      social: TeamSocial,
                      description: String,
