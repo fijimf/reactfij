@@ -6,6 +6,7 @@ import com.mongodb.casbah.Imports._
 import model.scraping.actors.{GameStub, PlayerStub, TeamBuilder}
 import model.scraping.data.TeamLink
 import model.scraping.scrapers._
+import play.api.Logger
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
@@ -41,20 +42,25 @@ object TeamLoader {
          bbPdData <- bbPageData) yield {
       val ps: Option[List[PlayerStub]] = bbPdData.get("players").map(_.asInstanceOf[List[Map[String, String]]]).map(_.flatMap(data => PlayerStub.fromMap(data)))
       val gs: Option[List[GameStub]] = bbPdData.get("games").map(_.asInstanceOf[List[Map[String, String]]]).map(_.flatMap(data => GameStub.fromMap(data)))
-      key -> tb.copy(
-                      division = bbPdData.get("Division:").map(_.asInstanceOf[String]),
-                      conference = bbPdData.get("Conf:").map(_.asInstanceOf[String]),
-                      colorNames = pdData.get("Colors:"),
-                      nickname = pdData.get("Nickname:"),
-                      location = pdData.get("Location:"),
-                      officialUrl = pdData.get("officialUrl"),
-                      twitterUrl = pdData.get("twitterUrl"),
-                      twitterHandle = pdData.get("twitterId"),
-                      facebookUrl = pdData.get("facebookUrl"),
-                      facebookPage = pdData.get("facebookPage"),
-                      playerStubs = ps.getOrElse(tb.playerStubs),
-                      gameStubs = gs.getOrElse(tb.gameStubs)
-                    )
+
+      val tbc: TeamBuilder = tb.copy(
+                                       division = bbPdData.get("Division:").map(_.asInstanceOf[String]),
+                                       conference = bbPdData.get("Conf:").map(_.asInstanceOf[String]),
+                                       colorNames = pdData.get("Colors:"),
+                                       nickname = pdData.get("Nickname:"),
+                                       location = pdData.get("Location:"),
+                                       logoUrl = bbPdData.get("logoUrl").map(_.asInstanceOf[String]),
+                                       officialName = bbPdData.get("officialName").map(_.asInstanceOf[String]),
+                                       officialUrl = pdData.get("officialUrl"),
+                                       twitterUrl = pdData.get("twitterUrl"),
+                                       twitterHandle = pdData.get("twitterId"),
+                                       facebookUrl = pdData.get("facebookUrl"),
+                                       facebookPage = pdData.get("facebookPage"),
+                                       playerStubs = ps.getOrElse(tb.playerStubs),
+                                       gameStubs = gs.getOrElse(tb.gameStubs)
+                                     )
+      val tuple: (String, TeamBuilder) = key -> tbc
+      tuple
     }
   }
 

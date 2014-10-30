@@ -1,0 +1,26 @@
+@angularMain("Teams", "teams", "teamsController") {
+<script>
+    var phonecatApp = angular.module('teams', []).controller;
+    function teamsController($scope, $http) {
+        $http({
+            method: 'GET',
+            url: '../api/teams'
+        }).success(function(data, status, headers, config) {
+            // data contains the response
+            // status is the HTTP status
+            // headers is the header getter function
+            // config is the object that was used to create the HTTP request
+            $scope.teams = data;
+        }).error(function(data, status, headers, config) {
+        });
+    }
+</script>
+
+<div ng-repeat="team in teams">
+    <p>
+        <h3><img src="{{team.logoUrl}}" />{{team.name}}</h3>
+    </p>
+</div>
+
+
+}

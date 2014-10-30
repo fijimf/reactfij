@@ -1,5 +1,7 @@
 package model.scraping.scrapers
 
+import java.util
+
 import org.jsoup._
 import org.jsoup.nodes._
 import org.jsoup.select._
@@ -21,9 +23,42 @@ case object BasketballTeamPageScraper {
     Logger.info("Loading "+key)
     WS.url(f"http://www.ncaa.com/schools/$key%s/basketball-men").get().map(s => {
       val d: Document = Jsoup.parse(s.body)
-      val meta: Iterator[(String, String)] = extractMeta(d)
-      meta.toMap ++ extractTables(d)
+      val meta: List[(String, String)] = extractMeta(d).toList
+      val m2: List[(String, String)] = extractOfficialName(d) match {
+        case Some(l) => ("officialName" -> l) :: meta
+        case None => meta
+      }
+      val m3: List[(String, String)] = extractLogoUrl(d) match {
+        case Some(l) => ("logoUrl" -> l) :: m2
+        case None => m2
+      }
+      val map: Map[String, Any] = m3.toMap ++ extractTables(d)
+
+      Logger.info("+++++++++++>>>"+map.get("officialName").toString)
+
+      map
     })
+  }
+
+  def extractOfficialName(d:Document): Option[String] = {
+    val it: util.Iterator[Element] = d.select("span.school-name").iterator()
+    if (it.hasNext){
+      val name: String = it.next.ownText()
+      Logger.info("Name->"+name)
+      Some(name)
+    }else {
+      None
+    }
+  }
+  def extractLogoUrl(d:Document): Option[String] = {
+    val it: util.Iterator[Element] = d.select("span.school-logo img").iterator()
+    if (it.hasNext){
+      val logoUrl: String = it.next.attr("src")
+      Logger.info("logo->"+logoUrl)
+      Some(logoUrl)
+    }else {
+      None
+    }
   }
 
   def extractMeta(d: Document): Iterator[(String, String)] = {

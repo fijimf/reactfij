@@ -1,0 +1,16 @@
+@(title: String, ngAppName:String, ngController:String)(content: Html)
+
+<!DOCTYPE html>
+
+<html><html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>@title</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+</head>
+<body>
+<div ng-app="@ngAppName" ng-controller="@ngController">
+    @content
+</div>
+</body>
+</html>

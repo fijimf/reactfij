@@ -4,6 +4,7 @@ import java.io.Serializable
 
 import com.mongodb.casbah.Imports
 import com.mongodb.casbah.Imports._
+import play.api.Logger
 
 case class TeamBuilder
 (
@@ -16,6 +17,7 @@ case class TeamBuilder
   location: Option[String] = None,
   color: Option[String] = None,
   logoUrl: Option[String] = None,
+  officialName: Option[String] = None,
   officialUrl: Option[String] = None,
   facebookPage: Option[String] = None,
   facebookUrl: Option[String] = None,
@@ -39,6 +41,7 @@ case class TeamBuilder
                                "location" -> location,
                                "color" -> color,
                                "logoUrl" -> logoUrl,
+                               "officialName" -> officialName,
                                "officialUrl" -> officialUrl,
                                "facebookPage" -> facebookPage,
                                "facebookUrl" -> facebookUrl,
@@ -55,7 +58,9 @@ object TeamBuilder {
     val collection = db("teams")
     val q: Imports.MongoDBObject = new Imports.MongoDBObject(Map("_id" -> tb.key))
     val flag: Imports.MongoDBObject = new Imports.MongoDBObject(Map("multi" -> false, "upsert" -> true))
-    collection.update(q, tb.toMongoObj(seasonKey), upsert = true, multi = false)
+    val obj: Imports.MongoDBObject = tb.toMongoObj(seasonKey)
+    Logger.info(obj.toString())
+    collection.update(q, obj, upsert = true, multi = false)
     //Logger.info(result)
   }
 }
