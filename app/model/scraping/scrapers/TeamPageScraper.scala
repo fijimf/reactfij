@@ -1,4 +1,6 @@
 package model.scraping.scrapers
+
+import org.joda.time.LocalDate
 import org.jsoup._
 import org.jsoup.nodes._
 import org.jsoup.select._
@@ -10,10 +12,11 @@ case object TeamPageScraper {
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
   import scala.collection.JavaConverters._
 
-  def loadPage[T](key: String): Future[Map[String, String]] = {
-    WS.url(f"http://www.ncaa.com/schools/$key%s").get().map(s => {
+  def loadPage[T](key: String, updateId:String): Future[Map[String, Any]] = {
+    val url: String = f"http://www.ncaa.com/schools/$key%s"
+    WS.url(url).get().map(s => {
       val d: Document = Jsoup.parse(s.body)
-      extractMeta(d).toMap ++ extractSocial(d)
+      extractMeta(d).toMap ++ extractSocial(d) ++Map("timestamp"->new LocalDate(),"sourceUrl"->url,"updateId"->updateId)
     })
   }
 

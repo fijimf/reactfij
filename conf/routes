@@ -8,7 +8,7 @@ GET     /testbed                    controllers.Scraper.gameBox
 GET     /testbed2                   controllers.Scraper.boxSvg
 GET     /teams                      controllers.Teams.show
 GET     /team/:key                 controllers.Teams.showTeam(key)
-GET     /api/teams                  controllers.Teams.list
+GET     /api/team                  controllers.Teams.list
 GET     /api/team/:key             controllers.Teams.get(key)
 
 # Map static resources from the /public folder to the /assets URL path

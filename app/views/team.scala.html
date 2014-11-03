@@ -1,24 +1,15 @@
 @(key: String)
 @angularMain("Team", "team", "teamController") {
-<script>
-    var phonecatApp = angular.module('team', []).controller;
-    function teamController($scope, $http) {
-        $http({
-            method: 'GET',
-            url: '../api/team/@key'
-        }).success(function(data, status, headers, config) {
-            // data contains the response
-            // status is the HTTP status
-            // headers is the header getter function
-            // config is the object that was used to create the HTTP request
-            $scope.team = data;
-        }).error(function(data, status, headers, config) {
-        });
-    }
-</script>
+
+
 
 <div>
-    <h1><img src="{{team.logoUrl}}"/>{{team.name}}</h1>
+    <div ng-controller="teamController">
+        <script>
+            app.value("key","@key");
+        </script>
+        <h1><img src="{{team.logoUrl}}"/>{{team.name}}</h1>
+    </div>
 </div>
 
 

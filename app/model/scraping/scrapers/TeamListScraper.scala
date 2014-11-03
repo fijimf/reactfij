@@ -3,6 +3,7 @@ package model.scraping.scrapers
 import java.io.PrintStream
 
 import model.scraping.data._
+import org.joda.time.{LocalDate, LocalTime}
 import play.api.Logger
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
@@ -22,12 +23,12 @@ case object TeamListScraper {
                                                   )(TeamLink.apply _)
 
 
-  def loadTeamList[T](): Future[Seq[TeamLink]] = {
+  def loadTeamList[T](): Future[(Seq[TeamLink], LocalDate)] = {
     WS.url("http://www.ncaa.com/sites/default/files/json/schools.json").get().map(s => {
       Logger.info("Received response from ncaa")
       Json.fromJson[Seq[TeamLink]](Json.parse(s.body)) match {
-        case JsSuccess(ts, _) => ts
-        case JsError(errors) =>  Seq.empty[TeamLink]
+        case JsSuccess(ts, _) => (ts, new LocalDate())
+        case JsError(errors) =>  (Seq.empty[TeamLink], new LocalDate())
       }
     })
   }

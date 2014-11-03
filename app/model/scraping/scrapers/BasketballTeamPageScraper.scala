@@ -2,6 +2,7 @@ package model.scraping.scrapers
 
 import java.util
 
+import org.joda.time.LocalDate
 import org.jsoup._
 import org.jsoup.nodes._
 import org.jsoup.select._
@@ -19,9 +20,10 @@ case object BasketballTeamPageScraper {
 
   import scala.collection.JavaConverters._
 
-  def loadPage[T](key: String): Future[Map[String, Any]] = {
+  def loadPage[T](key: String, updateId:String): Future[Map[String, Any]] = {
     Logger.info("Loading "+key)
-    WS.url(f"http://www.ncaa.com/schools/$key%s/basketball-men").get().map(s => {
+    val url: String = f"http://www.ncaa.com/schools/$key%s/basketball-men"
+    WS.url(url).get().map(s => {
       val d: Document = Jsoup.parse(s.body)
       val meta: List[(String, String)] = extractMeta(d).toList
       val m2: List[(String, String)] = extractOfficialName(d) match {
@@ -32,9 +34,7 @@ case object BasketballTeamPageScraper {
         case Some(l) => ("logoUrl" -> l) :: m2
         case None => m2
       }
-      val map: Map[String, Any] = m3.toMap ++ extractTables(d)
-
-      Logger.info("+++++++++++>>>"+map.get("officialName").toString)
+      val map: Map[String, Any] = m3.toMap ++ extractTables(d)++Map("timestamp"->new LocalDate(), "sourceUrl"->url, "updateId"->updateId)
 
       map
     })

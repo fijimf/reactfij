@@ -95,3 +95,9 @@ object GameStub {
     }
   }
 }
+
+case class ScrapingMetaData(updateId: String, url:String, timestamp:LocalDate)
+
+object ScrapingMetaData {
+
+}

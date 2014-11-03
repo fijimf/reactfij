@@ -16,7 +16,7 @@ class BasketballTeamPageActor extends Actor {
   override def receive: Receive = {
     case BasketballTeamPageReq(url) =>
       Logger.info("Loading "+url)
-      BasketballTeamPageScraper.loadPage(url).map((map: Map[String, Any]) => {
+      BasketballTeamPageScraper.loadPage(url,"").map((map: Map[String, Any]) => {
          sender() ! BasketballTeamPageResp(url, map)
       })
     case _ => Logger.info("Unexpected message")
@@ -29,7 +29,7 @@ class TeamPageActor extends Actor {
   override def receive: Receive = {
     case TeamPageReq(url) =>
       Logger.info("Loading "+url)
-      TeamPageScraper.loadPage(url).map((map: Map[String, Any]) => {
+      TeamPageScraper.loadPage(url,"").map((map: Map[String, Any]) => {
          sender() ! TeamPageResp(url, map)
       })
     case _ => Logger.info("Unexpected message")
