@@ -4,6 +4,7 @@ import java.io.Serializable
 
 import com.mongodb.casbah.Imports
 import com.mongodb.casbah.Imports._
+import org.joda.time.LocalDate
 import play.api.Logger
 
 case class TeamBuilder
