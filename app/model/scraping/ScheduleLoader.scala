@@ -7,6 +7,7 @@ import model.scraping.actors.{GameStub, PlayerStub, TeamBuilder}
 import model.scraping.data.{GameInfo, Scoreboard, Scoreboards, TeamLink}
 import model.scraping.scrapers._
 import org.joda.time.{Days, ReadablePeriod, LocalDate}
+import play.api.Logger
 import play.api.data.validation.ValidationError
 import play.api.libs.json.JsPath
 import scala.concurrent.duration.Duration
@@ -17,7 +18,9 @@ object ScheduleLoader {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def gameInfo(url:String): Future[Option[GameInfo]] = {
-    GameInfoScraper.loadGameUrl[GameInfo](url.replace( """/sites/default/files/data""", """http://data.ncaa.com/jsonp"""), (info: GameInfo) => info).map {
+    val newUrl: String = url.replace( """/sites/default/files/data""", """http://data.ncaa.com/jsonp""")
+    Logger.info("Loading "+newUrl)
+    GameInfoScraper.loadGameUrl[GameInfo](newUrl, (info: GameInfo) => info).map {
       case Left(_) => None
       case Right(x) => Some(x)
     }
@@ -28,7 +31,10 @@ object ScheduleLoader {
     val lfos: List[Future[Option[Scoreboard]]] = dates.map((date: LocalDate) => {
       DailyScoreboardScraper.loadDate(date, _.scoreboard.headOption).map {
         case Left(_) => None
-        case Right(x) => x
+        case Right(x) => {
+          Logger.info("For " + date + " loaded " + x.get.games.size + " game urls")
+          x
+        }
       }
     })
     val info:Throttler[String, Option[GameInfo]] = new Throttler[String, Option[GameInfo]](gameInfo)
@@ -46,11 +52,12 @@ object ScheduleLoader {
     val client = MongoClient("localhost", 27017)
 
 
-    loadSchedule(client, "2013-14", new LocalDate(2013,12,1), new LocalDate(2014,2,2) )
+    loadSchedule(client, "2014-15", new LocalDate(2014,11,1), new LocalDate(2014,12,15) )
   }
 
   def loadSchedule(client:casbah.MongoClient, seasonKey:String, from:LocalDate, to:LocalDate) {
     val eventualInfos: Future[Iterable[GameInfo]] = load(from, to)
+    Await.result(eventualInfos, Duration(15, TimeUnit.MINUTES))
     for (
       infos<-eventualInfos;
       info<-infos

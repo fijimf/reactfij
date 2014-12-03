@@ -44,8 +44,8 @@ case object GameInfoScraper {
                                                     (JsPath \ "gameState").read[String] and
                                                     (JsPath \ "startDate").read[LocalDate] and
                                                     (JsPath \ "startTime").read[LocalTime](jodaLocalTimeReads("h:mm", (s: String) => s.split(" ")(0))) and
-                                                    (JsPath \ "finalMessage").read[String] and
-                                                    (JsPath \ "gameStatus").read[String] and
+                                                    (JsPath \ "finalMessage").readNullable[String] and
+                                                    (JsPath \ "gameStatus").readNullable[String] and
                                                     (JsPath \ "location").read[String] and
                                                     (JsPath \ "contestName").read[String] and
                                                     (JsPath \ "url").read[String] and
@@ -98,7 +98,9 @@ case object GameInfoScraper {
       try {
         Json.fromJson[GameInfo](Json.parse(s)) match {
           case JsSuccess(scoreboards, _) => Right(f(scoreboards))
-          case JsError(errors) => Left(errors)
+          case JsError(errors) =>
+            Logger.warn(errors.mkString("\n"))
+            Left(errors)
         }
       }
       catch {

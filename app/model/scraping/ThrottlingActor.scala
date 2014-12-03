@@ -20,14 +20,18 @@ class ThrottlingActor[S, T](val f: S => Future[T], maxConcurrent:Int=10, retryAt
         case (s, u, n) :: rest =>
           pendingRequests = rest
           outstandingRequests = outstandingRequests + 1
+          Logger.info("Submitting from queue")
+          Logger.info("Queued Requests: "+pendingRequests.size)
           submitRequest(u, s, n)
         case Nil =>
       }
     case s: S =>
-      if (outstandingRequests < 10) {
+      if (outstandingRequests < maxConcurrent) {
         outstandingRequests = outstandingRequests + 1
+        Logger.info("Submitting request")
         submitRequest(s, sender(), 5)
       } else {
+        Logger.info("Queueing request")
         queueRequest(s, sender(), 5)
       }
     case _ =>
@@ -53,5 +57,6 @@ class ThrottlingActor[S, T](val f: S => Future[T], maxConcurrent:Int=10, retryAt
 
   def queueRequest(s: S, sender: ActorRef, n:Int): Unit = {
     pendingRequests ::=(sender, s, n)
+    Logger.info("Queued Requests: "+pendingRequests.size)
   }
 }

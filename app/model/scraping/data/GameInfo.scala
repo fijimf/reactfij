@@ -14,8 +14,8 @@ case class GameInfo(
                      gameState: String,
                      startDate: LocalDate,
                      startTime: LocalTime,
-                     finalMessage: String,
-                     gameStatus: String,
+                     finalMessage: Option[String],
+                     gameStatus: Option[String],
                      location: String,
                      contestName: String,
                      url: String,
@@ -45,7 +45,7 @@ object GameInfo {
     val sportTwitter: Option[String] = g.home.social.twitter.headOption.flatMap(_.accounts.sport)
     val awayTeamKey = g.away.key
 
-    Logger.info("Merging game #" + g.gameId + " " + g.away.key + " @ " + g.home.key)
+    Logger.info("Merging game #" + g.gameId + " "+g.gameTime+" " + g.away.key + " @ " + g.home.key)
     val h = loadTeam(teams, g.home)
     val a = loadTeam(teams, g.away)
 

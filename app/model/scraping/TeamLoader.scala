@@ -2,6 +2,7 @@ package model.scraping
 
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import akka.actor.{Props, ActorSystem, ActorRef}
 import com.mongodb.casbah
 import com.mongodb.casbah.Imports._
 import model.scraping.actors.{GameStub, PlayerStub, TeamBuilder}
@@ -16,12 +17,11 @@ object TeamLoader {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  def load(): Future[Iterable[(String, TeamBuilder)]] = {
-    val updateId: String = UUID.randomUUID().toString;
-    Logger.info("Uppdate ID is "+updateId)
-    val list: Future[(Seq[TeamLink], LocalDate)] = TeamListScraper.loadTeamList()
-    val teamsTimestamp: Future[LocalDate] = list.map(_._2)
-    val teamList: Future[Map[String, TeamBuilder]] = list.map(_._1).map((teamLinks: Seq[TeamLink]) => {
+  def load(updateId:String): Future[Iterable[(String, TeamBuilder)]] = {
+
+    Logger.info("Update ID is "+updateId)
+    val list: Future[Seq[TeamLink]] = TeamListScraper.loadTeamList()
+    val teamList: Future[Map[String, TeamBuilder]] = list.map((teamLinks: Seq[TeamLink]) => {
       teamLinks.foldLeft(Map.empty[String, TeamBuilder])((data: Map[String, TeamBuilder], link: TeamLink) => {
         link match {
           case TeamLink(Some(name), key) => data + (key -> TeamBuilder(key, name))
@@ -74,13 +74,18 @@ object TeamLoader {
     new play.core.StaticApplication(new java.io.File("."))
     val client = MongoClient("localhost", 27017)
 
-    loadTeamKernel(client,"2013-14")
+    loadTeamKernel(client,"2014-15")
   }
 
   def loadTeamKernel(client: casbah.MongoClient, seasonKey:String) {
-    val result: Iterable[(String, TeamBuilder)] = Await.result(load(), Duration(15, TimeUnit.MINUTES))
+    val updateId: String = UUID.randomUUID().toString;
+    val result: Iterable[(String, TeamBuilder)] = Await.result(load(updateId), Duration(15, TimeUnit.MINUTES))
+    Await.result(LoadLog.dump(updateId),Duration(15, TimeUnit.MINUTES)).foreach(s=>Logger.info(s.toString()))
     result.foreach((tuple: (String, TeamBuilder)) => {
       TeamBuilder.upsertTeam(client, tuple._2, seasonKey)
     })
+
+
+
   }
 }

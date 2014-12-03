@@ -60,7 +60,7 @@ object TeamBuilder {
     val q: Imports.MongoDBObject = new Imports.MongoDBObject(Map("_id" -> tb.key))
     val flag: Imports.MongoDBObject = new Imports.MongoDBObject(Map("multi" -> false, "upsert" -> true))
     val obj: Imports.MongoDBObject = tb.toMongoObj(seasonKey)
-    Logger.info(obj.toString())
+ //   Logger.info(obj.toString())
     collection.update(q, obj, upsert = true, multi = false)
     //Logger.info(result)
   }
