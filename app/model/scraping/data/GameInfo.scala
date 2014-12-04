@@ -47,7 +47,15 @@ object GameInfo {
 
     Logger.info("Merging game #" + g.gameId + " "+g.gameTime+" " + g.away.key + " @ " + g.home.key)
     val h = loadTeam(teams, g.home)
+
     val a = loadTeam(teams, g.away)
+
+    Logger.info(g.toString)
+     matchGame(g, h)//.headOption
+     matchGame(g, a)//.headOption
+
+//    Logger.info(homeOpt.toString)
+//    Logger.info(awayOpt.toString)
 
     //    println(h)
     //    println(a)
@@ -55,6 +63,20 @@ object GameInfo {
     //    val flag: Imports.MongoDBObject = new Imports.MongoDBObject(Map("multi" -> false, "upsert" -> true))
     ////    collection.update(q, g.toMongoObj(seasonKey), upsert = true, multi = false)
     //Logger.info(result)
+  }
+
+  def matchGame(g: GameInfo, h: Option[casbah.MongoCollection#T]) {//: Iterable[(MongoCollection#T, Any)] = {
+    for (
+      ht <- h;
+      s <- ht.getAs[MongoDBObject]("season");
+      gs <- s.getAs[MongoDBList]("games");
+      gx <- gs if (gx.asInstanceOf[DBObject].get("date") == g.startDate.toString("MM/dd/yy"))
+    )  {
+      Logger.info(ht.toString)
+      Logger.info(gx.asInstanceOf[DBObject].toString)
+      gx.asInstanceOf[BasicDBObject].append("gameId",g.gameId)
+
+    }
   }
 
   def loadTeam(teams: casbah.MongoCollection, gameTeam: GameTeam): Option[teams.T] = {

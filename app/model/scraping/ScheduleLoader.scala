@@ -52,7 +52,7 @@ object ScheduleLoader {
     val client = MongoClient("localhost", 27017)
 
 
-    loadSchedule(client, "2014-15", new LocalDate(2014,11,1), new LocalDate(2014,12,15) )
+    loadSchedule(client, "2014-15", new LocalDate(2014,11,20), new LocalDate(2014,12,1) )
   }
 
   def loadSchedule(client:casbah.MongoClient, seasonKey:String, from:LocalDate, to:LocalDate) {
